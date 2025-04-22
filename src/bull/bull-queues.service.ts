@@ -103,6 +103,7 @@ export class BullQueuesService implements OnModuleInit, OnModuleDestroy {
         this._queues[queueKey] = new Queue(queueName, {
           prefix: queuePrefix,
           connection: {
+            tls: this.configService.config.REDIS_ENABLE_TLS ? {} : undefined,
             host: this.configService.config.REDIS_HOST,
             port: this.configService.config.REDIS_PORT,
             password: this.configService.config.REDIS_PASSWORD,
@@ -129,6 +130,7 @@ export class BullQueuesService implements OnModuleInit, OnModuleDestroy {
         this._schedulers[queueKey] = new QueueScheduler(queueName, {
           prefix: queuePrefix,
           connection: {
+            tls: this.configService.config.REDIS_ENABLE_TLS ? {} : undefined,
             host: this.configService.config.REDIS_HOST,
             port: this.configService.config.REDIS_PORT,
             password: this.configService.config.REDIS_PASSWORD,

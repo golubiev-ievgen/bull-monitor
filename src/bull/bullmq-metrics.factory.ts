@@ -191,6 +191,7 @@ export class BullMQMetricsFactory {
     const queueEvents = new QueueEvents(queueName, {
       prefix: queuePrefix,
       connection: {
+        tls: this.configService.config.REDIS_ENABLE_TLS ? {} : undefined,
         host: this.configService.config.REDIS_HOST,
         port: this.configService.config.REDIS_PORT,
         password: this.configService.config.REDIS_PASSWORD,

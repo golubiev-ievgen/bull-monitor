@@ -65,6 +65,7 @@ export class BullArenaUi implements IBullUi {
       name: queueName,
       prefix: queuePrefix,
       redis: {
+        tls: this.configService.config.REDIS_ENABLE_TLS ? {} : undefined,
         host: this.configService.config.REDIS_HOST,
         password: this.configService.config.REDIS_PASSWORD,
         port: this.configService.config.REDIS_PORT,
