@@ -247,7 +247,7 @@ export class BullQueuesService implements OnModuleInit, OnModuleDestroy {
     const loadedQueues = new Set([]);
     return new Promise((resolve, reject) => {
       client
-        .scanStream({ type: 'hash', match, count: 100 })
+        .scanStream({ match, count: 100 })
         .on('data', (keys: string[]) => {
           for (const key of keys) {
             const queueMatch = parseBullQueue(key);
@@ -377,8 +377,8 @@ export class BullQueuesService implements OnModuleInit, OnModuleDestroy {
         newlyLoadedQueues = (
           await Promise.all([
             // this.findAndPopulateQueues(`${queuePrefix}:*:stalled-check`),
-            //this.findAndPopulateQueues(`${queuePrefix}:*:id`),
-            this.findAndPopulateQueues(`${queuePrefix}:*:meta`),
+            this.findAndPopulateQueues(`${queuePrefix}:*:id`),
+            // this.findAndPopulateQueues(`${queuePrefix}:*:meta`),
           ])
         ).flat();
       }
