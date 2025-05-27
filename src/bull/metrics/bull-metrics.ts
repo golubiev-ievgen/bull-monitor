@@ -98,19 +98,33 @@ export function init(options: BullMetricsOptions) {
 
   function recordJobMetrics(labels: Record<string, string>, status: string, job: any) {
     try {
-      if (!job.processedOn || !job.timestamp) {
-        console.error('Job missing required timing data:', job.id);
+      if (!job) {
+        console.error('No job data provided to recordJobMetrics');
         return;
       }
 
-      const duration = job.processedOn ? Date.now() - job.processedOn : 0;
-      const waitDuration = job.processedOn && job.timestamp ? job.processedOn - job.timestamp : 0;
+      const now = Date.now();
+      const duration = job.finishedOn ? job.finishedOn - job.processedOn : now - (job.processedOn || now);
+      const waitDuration = job.processedOn ? job.processedOn - job.timestamp : now - job.timestamp;
 
-      job_duration.observe({ ...labels, status }, duration);
-      job_wait_duration.observe({ ...labels, status }, waitDuration);
-      job_attempts.observe({ ...labels, status }, job.attemptsMade || 0);
+      console.debug('Recording metrics for job:', {
+        id: job.id,
+        name: job.name,
+        duration,
+        waitDuration,
+        attempts: job.attemptsMade,
+        timestamps: {
+          created: job.timestamp,
+          processed: job.processedOn,
+          finished: job.finishedOn
+        }
+      });
+
+      job_duration.observe(duration, { ...labels, status });
+      job_wait_duration.observe(waitDuration, { ...labels, status });
+      job_attempts.observe(job.attemptsMade || 0, { ...labels, status });
     } catch (err) {
-      console.error('Error recording job metrics:', err);
+      console.error('Error recording job metrics:', err, 'Job:', job);
     }
   }
 
@@ -126,58 +140,84 @@ export function init(options: BullMetricsOptions) {
       const completedEvent = useGlobal ? 'global:completed' : 'completed';
       const failedEvent = useGlobal ? 'global:failed' : 'failed';
 
-      queue.on(completedEvent, async (job) => {
+      queue.on(completedEvent, (job) => {
         try {
-          const completeJob = await queue.getJob(job.id);
-          if (!completeJob) {
-            console.error('Could not fetch complete job data for:', job.id);
-            return;
-          }
-
+          console.debug('Completed event received for job:', { id: job.id, name: job.name });
           const jobLabels = {
             ...labels,
-            [LABEL_NAMES.JOB_NAME]: completeJob.name || 'default',
+            [LABEL_NAMES.JOB_NAME]: job.name || 'default',
             [LABEL_NAMES.STATUS]: STATUS_TYPES.COMPLETED,
             [LABEL_NAMES.ERROR_TYPE]: '',
           };
-          recordJobMetrics(jobLabels, STATUS_TYPES.COMPLETED, completeJob);
+          recordJobMetrics(jobLabels, STATUS_TYPES.COMPLETED, job);
         } catch (err) {
-          console.error('Error handling completed event:', err);
+          console.error('Error handling completed event:', err, 'Job:', job);
         }
       });
 
-      queue.on(failedEvent, async (job, err) => {
+      queue.on(failedEvent, (job, err) => {
         try {
-          const completeJob = await queue.getJob(job.id);
-          if (!completeJob) {
-            console.error('Could not fetch complete job data for:', job.id);
-            return;
-          }
-
+          console.debug('Failed event received for job:', { id: job.id, name: job.name, error: err?.message });
           const jobLabels = {
             ...labels,
-            [LABEL_NAMES.JOB_NAME]: completeJob.name || 'default',
+            [LABEL_NAMES.JOB_NAME]: job.name || 'default',
             [LABEL_NAMES.STATUS]: STATUS_TYPES.FAILED,
             [LABEL_NAMES.ERROR_TYPE]: err?.name || 'Error',
           };
-          recordJobMetrics(jobLabels, STATUS_TYPES.FAILED, completeJob);
+          recordJobMetrics(jobLabels, STATUS_TYPES.FAILED, job);
         } catch (err) {
-          console.error('Error handling failed event:', err);
+          console.error('Error handling failed event:', err, 'Job:', job);
         }
       });
 
       const metricsInterval = setInterval(async () => {
         try {
           const counts = await queue.getJobCounts();
-          jobs_completed_total.set(labels, counts.completed);
-          jobs_active_total.set(labels, counts.active);
-          jobs_delayed_total.set(labels, counts.delayed);
-          jobs_failed_total.set(labels, counts.failed);
-          jobs_waiting_total.set(labels, counts.waiting);
+          const jobs = {
+            completed: await queue.getJobs(['completed'], 0, 100),
+            active: await queue.getJobs(['active'], 0, 100),
+            delayed: await queue.getJobs(['delayed'], 0, 100),
+            failed: await queue.getJobs(['failed'], 0, 100),
+            waiting: await queue.getJobs(['waiting'], 0, 100),
+          };
+
+          // Group jobs by name
+          const jobsByName = {
+            completed: groupJobsByName(jobs.completed),
+            active: groupJobsByName(jobs.active),
+            delayed: groupJobsByName(jobs.delayed),
+            failed: groupJobsByName(jobs.failed),
+            waiting: groupJobsByName(jobs.waiting),
+          };
+
+          // Update metrics for each job name
+          Object.entries(jobsByName.completed).forEach(([jobName, count]) => {
+            jobs_completed_total.set({ ...labels, [LABEL_NAMES.JOB_NAME]: jobName }, count);
+          });
+          Object.entries(jobsByName.active).forEach(([jobName, count]) => {
+            jobs_active_total.set({ ...labels, [LABEL_NAMES.JOB_NAME]: jobName }, count);
+          });
+          Object.entries(jobsByName.delayed).forEach(([jobName, count]) => {
+            jobs_delayed_total.set({ ...labels, [LABEL_NAMES.JOB_NAME]: jobName }, count);
+          });
+          Object.entries(jobsByName.failed).forEach(([jobName, count]) => {
+            jobs_failed_total.set({ ...labels, [LABEL_NAMES.JOB_NAME]: jobName }, count);
+          });
+          Object.entries(jobsByName.waiting).forEach(([jobName, count]) => {
+            jobs_waiting_total.set({ ...labels, [LABEL_NAMES.JOB_NAME]: jobName }, count);
+          });
         } catch (err) {
           console.error('Error fetching job counts:', err);
         }
       }, interval);
+
+      function groupJobsByName(jobs: any[]) {
+        return jobs.reduce((acc, job) => {
+          const name = job.name || 'default';
+          acc[name] = (acc[name] || 0) + 1;
+          return acc;
+        }, {});
+      }
 
       return {
         stop() {
