@@ -1,10 +1,20 @@
+import { Queue } from 'bull';
 import { createBullBoard } from '@bull-board/api';
-import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
-import { ExpressAdapter } from '@bull-board/express';
-import { Queue } from 'bullmq';
+import { BullAdapter } from '@bull-board/api/bullAdapter';
 import { ConfigService } from '../../config/config.service';
 import { LoggerService } from '../../logger';
 import { IBullUi } from '../bull.interfaces';
+import { ExpressAdapter } from '@bull-board/express';
+/**
+ * On the hacky side. This has the internal information for how
+ * queues are stored in bull board. Since we are adding/removing
+ * periodically we want to be able to modify these values in response
+ * to incoming redis events. There are currently existing methods
+ * setQueues and replaceQueues but they seem a bit heavy handed
+ */
+interface BullBoardLocals {
+  bullBoardQueues: Map<string, BullAdapter>;
+}
 
 export class BullBoardUi implements IBullUi {
   private readonly _ui: ExpressAdapter; //ReturnType<typeof createBullBoard>;
@@ -21,7 +31,12 @@ export class BullBoardUi implements IBullUi {
   }
 
   addQueue(queuePrefix: string, queueName: string, queue: Queue) {
-    this._board.addQueue(new BullMQAdapter(queue));
+    const queueKey = `${queuePrefix}:${queueName}`;
+    this._board.addQueue(new BullAdapter(queue))
+    // (this._ui.router.locals as BullBoardLocals).bullBoardQueues.set(
+    //   queueKey,
+    //   new BullAdapter(queue),
+    // );
   }
 
   removeQueue(queuePrefix: string, queueName: string) {

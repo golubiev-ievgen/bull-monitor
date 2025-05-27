@@ -51,7 +51,7 @@
     "bull": "^4.8.3",
     "bull-arena": "^3.29.3",
     "bull-master": "^1.0.5",
-    "bull-prom": "ejhayes/bull-prom#master",
+    "bull-board": "^2.1.0",
     "bullmq": "^1.86.2",
     "commander": "^9.3.0",
     "envalid": "^7.3.1",

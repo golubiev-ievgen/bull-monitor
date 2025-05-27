@@ -1,6 +1,6 @@
 export enum REDIS_KEYSPACE_EVENT_TYPES {
   DELETE = 'del',
-  HSET = 'hset',
+  SET = 'set',
 }
 
 export enum REDIS_EVENT_TYPES {

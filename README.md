@@ -164,7 +164,8 @@ The following labels are available:
 Things to note about these metrics:
 
 - Queue metrics are GLOBAL not worker specific
-- Gauge metrics (`*_total`) are refreshed every 60 seconds. To change this you'll need to set environment variable `BULL_COLLECT_QUEUE_METRICS_INTERVAL_MS` to another value.
+- Queue metrics are refreshed every 60 seconds. To change this simply you'll need to set environment variable `BULL_COLLECT_QUEUE_METRICS_INTERVAL_MS` to another value.
+- Available prometheus labels: `queue_name`, `queue_prefix`, `status`
 
 ## grafana support
 
@@ -185,7 +186,7 @@ npm run start:dev
 npm run generate
 ```
 
-You can now go to: http://localhost:3001/dashboard/import and load dashboards:
+You can now go to: <http://localhost:3001/dashboard/import> and load dashboards:
 
 | Grafana Dashboard Name | Grafana ID                                            | Description                                      | Screenshot                                  |
 | ---------------------- | ----------------------------------------------------- | ------------------------------------------------ | ------------------------------------------- |
@@ -198,19 +199,19 @@ There are 3 options currently available for UIs: `bull-board`, `arena`, and `bul
 
 ### bull-board
 
-From: https://github.com/felixmosh/bull-board#readme. This is the default UI. If you want to be explicit just set `UI` environment variable to `bull-board`.
+From: <https://github.com/felixmosh/bull-board#readme>. This is the default UI. If you want to be explicit just set `UI` environment variable to `bull-board`.
 
 ![](screenshots/bull-board-ui.png)
 
 ### bull-master
 
-From: https://github.com/hans-lizihan/bull-master. To use this UI you'll need to set the `UI` environment variable to `bull-master`.
+From: <https://github.com/hans-lizihan/bull-master>. To use this UI you'll need to set the `UI` environment variable to `bull-master`.
 
 ![](screenshots/bull-master-ui.png)
 
 ### bull-arena
 
-From: https://github.com/bee-queue/arena. To use this UI you'll need to set the `UI` environment variable to `arena`.
+From: <https://github.com/bee-queue/arena>. To use this UI you'll need to set the `UI` environment variable to `arena`.
 
 ![](screenshots/arena-ui.png)
 
@@ -242,9 +243,9 @@ npm run start:dev
 
 The following services are available (and automatically configured) at these locations:
 
-- Grafana UI: http://localhost:3001
-- Prometheus: http://localhost:3002
-- SMTP (Mailhog): http:localhost: http://localhost:3003 (username: `test`, password: `test`)
+- Grafana UI: <http://localhost:3001>
+- Prometheus: <http://localhost:3002>
+- SMTP (Mailhog): http:localhost: <http://localhost:3003> (username: `test`, password: `test`)
 - Redis: `localhost:6001`
 - SMTP Server (used by Grafana Alerts): `localhost:6002` (no auth required, no encryption)
 

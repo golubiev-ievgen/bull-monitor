@@ -1,70 +1,15 @@
 version: '3'
-
 services:
   bull-monitor:
-    image: bull-monitor:latest
-    build:
-      context: .
-      args:
-        BUILD_VERSION: local
+    image: bull-monitor-test:latest
     ports:
       - 3000:3000
-    env_file:
-      - ./environments/local.env
-    depends_on:
-      - redis
     environment:
-      USE_OAUTH2_PROXY: '0'
-      OAUTH2_PROXY_PROVIDER: 'github'
-      OAUTH2_PROXY_CLIENT_ID: ''
-      OAUTH2_PROXY_CLIENT_SECRET: ''
-      OAUTH2_PROXY_REDIRECT_URL: 'http://localhost:3000'
-      OAUTH2_PROXY_PASS_AUTHORIZATION_HEADER: '1'
-      OAUTH2_PROXY_EMAIL_DOMAINS: '*'
-      OAUTH2_PROXY_SCOPE: 'user:email'
       UI: bull-board
-      REDIS_HOST: redis
+      REDIS_HOST: master.beti-sandbox.69ngmp.euw1.cache.amazonaws.com
       REDIS_PORT: 6379
+      REDIS_PASSWORD: "]r<{y[J]h7I{s{1NOK}{!XymlBC0f!m{aRA<LS[H"
+      BULL_WATCH_QUEUE_PREFIXES: "bull"
+      LOG_LEVEL: "info"
       PORT: 3000
-  grafana:
-    image: grafana/grafana:latest
-    environment:
-      GF_INSTALL_PLUGINS: grafana-clock-panel,grafana-simple-json-datasource
-      GF_RENDERING_SERVER_URL: http://renderer:8081/render
-      GF_RENDERING_CALLBACK_URL: http://grafana:3000/
-      GF_LOG_FILTERS: rendering:debug
-    ports:
-      - 3001:3001
-    depends_on:
-      - prometheus
-      - smtp
-      - grafana-renderer
-    volumes:
-      - ./grafana.ini:/etc/grafana/grafana.ini
-      - ./grafana_prometheus.yml:/etc/grafana/provisioning/datasources/grafana_prometheus.yml
-      - ./grafana_email.yml:/etc/grafana/provisioning/notifiers/grafana_email.yml
-  # https://github.com/grafana/grafana-image-renderer/issues/48
-  grafana-renderer: # https://grafana.com/docs/grafana/latest/administration/image_rendering/#remote-rendering-service
-    image: grafana/grafana-image-renderer:latest
-    ports:
-      - 8081
-  prometheus:
-    image: prom/prometheus:latest
-    ports:
-      - 3002:9090
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-  redis:
-    image: redis:alpine
-    ports:
-      - '6001:6379'
-  smtp:
-    image: mailhog/mailhog:latest
-    restart: always
-    ports:
-      - 6002:1025 # smtp
-      - 3003:8025 # web ui
-    environment:
-      - MH_AUTH_FILE=/home/mailhog/smtp-auth
-    volumes:
-      - ./smtp-auth:/home/mailhog/smtp-auth
+      REDIS_ENABLE_TLS: "true"

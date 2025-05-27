@@ -7,7 +7,6 @@ import { BullMetricsService } from './bull-metrics.service';
 import { BullQueuesService } from './bull-queues.service';
 import { BullUiService } from './bull-ui.service';
 import { REDIS_CLIENTS } from './bull.enums';
-import { BullMQMetricsFactory } from './bullmq-metrics.factory';
 
 @Module({
   imports: [
@@ -33,12 +32,7 @@ import { BullMQMetricsFactory } from './bullmq-metrics.factory';
       },
     }),
   ],
-  providers: [
-    BullQueuesService,
-    BullMetricsService,
-    BullUiService,
-    BullMQMetricsFactory,
-  ],
+  providers: [BullQueuesService, BullMetricsService, BullUiService],
 })
 export class BullModule implements NestModule {
   configure(consumer: MiddlewareConsumer): MiddlewareConsumer | void {
