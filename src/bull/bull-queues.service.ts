@@ -17,16 +17,14 @@ const BULL_QUEUE_REGEX = /(?<queuePrefix>^[^:]+):(?<queueName>[^:]+):/;
 const BULL_KEYSPACE_REGEX =
   /(?<queuePrefix>[^:]+):(?<queueName>[^:]+):stalled-check$/;
 const parseBullQueue = (key: string) => {
-  const MATCHER = key.match(/:stalled-check$/)
-    ? BULL_KEYSPACE_REGEX
-    : BULL_QUEUE_REGEX;
+  const MATCHER = key.match(/:meta$/) ? BULL_KEYSPACE_REGEX : BULL_QUEUE_REGEX;
   const match = key.match(MATCHER);
-  return {
+  return match? {
     queuePrefix: match.groups?.queuePrefix
       ? match.groups.queuePrefix
       : 'unknown',
     queueName: match.groups?.queueName ? match.groups.queueName : 'unknown',
-  };
+  }:null;
 };
 
 const REDIS_CONFIG_NOTIFY_KEYSPACE_EVENTS = 'notify-keyspace-events';
@@ -126,6 +124,7 @@ export class BullQueuesService implements OnModuleInit {
         .on('data', (keys: string[]) => {
           for (const key of keys) {
             const queueMatch = parseBullQueue(key);
+            if (!queueMatch){continue};
             loadedQueues.add(
               this.generateQueueKey(
                 queueMatch.queuePrefix,
@@ -258,6 +257,7 @@ export class BullQueuesService implements OnModuleInit {
         REDIS_EVENT_TYPES.PMESSAGE,
         async (pattern: string, channel: string, message: string) => {
           const queueMatch = parseBullQueue(channel);
+          if (!queueMatch){return};
           await this.processMessage(
             message as REDIS_KEYSPACE_EVENT_TYPES,
             queueMatch.queuePrefix,
