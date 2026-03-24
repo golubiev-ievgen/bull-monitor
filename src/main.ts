@@ -12,6 +12,7 @@ Sentry.init({
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConfigService } from './config/config.service';
+import { basicAuth } from "./config/basicAuth";
 import { LoggerService } from './logger';
 import { OpenAPIModule } from './openapi/openapi.module';
 
@@ -19,6 +20,12 @@ async function bootstrap() {
   const logger = new LoggerService();
   logger.setContext(bootstrap.name);
   const app = await NestFactory.create(AppModule, { logger });
+  app.use((req, res, next) => {
+    if (req.path === '/metrics' || req.path.startsWith('/metrics/')) {
+      return next();
+    }
+    return basicAuth(req, res, next);
+});
   const configService: ConfigService = app.get(ConfigService);
 
   OpenAPIModule.setup('docs', app);
